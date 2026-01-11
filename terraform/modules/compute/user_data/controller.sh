@@ -14,14 +14,28 @@ apt-get upgrade -y
 apt install -y software-properties-common
 add-apt-repository --yes --update ppa:ansible/ansible
 
+id ubuntu &>/dev/null || useradd -m -s /bin/bash ubuntu
+
 apt install -y ansible
 apt install -y curl git python3-pip unzip
-
 ansible --version > /tmp/ansible_version.txt
 
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
 unzip /tmp/awscliv2.zip -d /tmp
 /tmp/aws/install
+
+# Generate SSH key for Ansible (as ubuntu)
+#su - ubuntu -c "ssh-keygen -t ed25519 -f ~/.ssh/ansible -N ''"
+
+# Fix permissions
+#chown -R ubuntu:ubuntu /home/ubuntu/.ssh
+#chmod 700 /home/ubuntu/.ssh
+#chmod 600 /home/ubuntu/.ssh/ansible
+#chmod 644 /home/ubuntu/.ssh/ansible.pub
+
+cat <<EOF > /home/ubuntu/.ssh/ansible
+${ANSIBLE_PRIVATE_KEY}
+EOF
 
 aws --version
 
@@ -35,6 +49,52 @@ cd /opt/
 git clone https://${TOKEN}@github.com/nilampaksi/devops-bootcamp-project.git
 cd devops-bootcamp-project/ansible
 
-
 echo "CONTROLLER USER DATA COMPLETED" > /tmp/user_data_controller.done
+
+RUNNER_HOME="/opt/github-runner"
+mkdir -p $RUNNER_HOME
+cd $RUNNER_HOME
+
+# Download runner
+curl -o actions-runner.tar.gz -L \
+  https://github.com/actions/runner/releases/download/v2.317.0/actions-runner-linux-x64-2.317.0.tar.gz
+
+tar xzf actions-runner.tar.gz
+chown -R ubuntu:ubuntu $RUNNER_HOME
+
+# Fetch secrets
+RUNNER_TOKEN=$(aws ssm get-parameter \
+  --name "/devops/github/runner_token" \
+  --with-decryption \
+  --query "Parameter.Value" \
+  --output text)
+
+REPO_URL=$(aws ssm get-parameter \
+  --name "/devops/github/repo_url" \
+  --query "Parameter.Value" \
+  --output text)
+
+# Configure runner
+sudo -u ubuntu ./config.sh \
+  --url "$REPO_URL" \
+  --token "$RUNNER_TOKEN" \
+  --name "ansible-controller" \
+  --labels "controller,docker,ecr" \
+  --unattended
+
+# Install as service
+./svc.sh install
+./svc.sh start
+
+# Docker web server customization
+cd /opt/
+rm -rf lab-final-project
+git clone https://$TOKEN@github.com/Infratify/lab-final-project.git
+cd lab-final-project
+
+# Customize .env
+ENV_FILE="/opt/lab-final-project/.env"
+
+# Example: replace USER_NAME
+sed -i "s/^USER_NAME=.*/USER_NAME=YourName/" $ENV_FILE
 

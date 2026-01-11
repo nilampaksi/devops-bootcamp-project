@@ -1,0 +1,53 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    env:
+      AWS_REGION: ap-southeast-1
+      ECR_REPO: devops-bootcamp/final-project-muhaimin
+      APP_NAME: my-devops-project
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Login to Amazon ECR
+      run: |
+        aws ecr get-login-password --region $AWS_REGION \
+        | docker login \
+          --username AWS \
+          --password-stdin \
+          $(aws sts get-caller-identity --query Account --output text).dkr.ecr.$AWS_REGION.amazonaws.com
+
+    - name: Build Docker image
+      run: |
+        docker build -t $APP_NAME .
+
+    - name: Tag & Push image
+      run: |
+        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        docker tag $APP_NAME:latest $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
+        docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
+
+ #   - name: Update .env file
+ #     run: |
+ #       sed -i 's/^USER_NAME=.*/USER_NAME=Muhd Muhaimin/' .env
+
+    - name: Install Ansible Galaxy collections
+      run: |
+        ansible-galaxy collection install -r ansible/collections/requirements.yml
+        
+    - name: Run Ansible (Docker + Monitoring)
+      run: |
+        cd ansible
+        ansible-playbook -i inventory/hosts.ini playbooks/install-docker.yml
+        ansible-playbook -i inventory/hosts.ini playbooks/deploy-app.yml
+        ansible-playbook -i inventory/hosts.ini playbooks/node-exporter.yml
+        ansible-playbook -i inventory/hosts.ini playbooks/prometheus.yml
+        ansible-playbook -i inventory/hosts.ini playbooks/grafana.yml
