@@ -1,0 +1,36 @@
+---
+- name: Deploy application container
+  hosts: web
+  become: true
+
+  vars:
+    aws_region: ap-southeast-1
+    ecr_repo: devops-bootcamp/final-project-muhaimin
+    app_name: my-devops-project
+    user_name: "Muhammad Muhaimin Aiman Bin Mazlan"
+
+  tasks:
+    - name: Login to ECR
+      shell: |
+        aws ecr get-login-password --region {{ aws_region }} \
+        | docker login \
+          --username AWS \
+          --password-stdin \
+          $(aws sts get-caller-identity --query Account --output text).dkr.ecr.{{ aws_region }}.amazonaws.com
+
+    - name: Create env file
+      copy:
+        dest: /opt/app/.env
+        content: |
+          USER_NAME={{ user_name }}
+
+    - name: Run container
+      docker_container:
+        name: app
+        image: "{{ lookup('pipe', 'aws sts get-caller-identity --query Account --output text') }}.dkr.ecr.{{ aws_region }}.amazonaws.com/{{ ecr_repo }}:latest"
+        state: started
+        restart_policy: always
+        env_file: /opt/app/.env
+        ports:
+          - "80:80"
+

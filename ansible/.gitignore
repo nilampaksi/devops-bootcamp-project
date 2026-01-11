@@ -1,0 +1,7 @@
+############################
+# Ansible
+############################
+
+# Role and Collection directories
+ansible/roles/
+ansible/collections/
