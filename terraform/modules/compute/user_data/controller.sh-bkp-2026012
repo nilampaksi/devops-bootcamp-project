@@ -1,16 +1,7 @@
 #!/bin/bash
 set -eux
 
-# ==============================
-# REQUIRED VARIABLES (ADDED)
-# ==============================
-RUNNER_HOME=/opt/github-runner
-RUNNER_NAME=ansible-controller
-REPO_URL=https://github.com/nilampaksi/devops-bootcamp-project
-
-# ==============================
 # wait for cloud-init & apt
-# ==============================
 while lsof /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
   sleep 5
 done
@@ -29,28 +20,27 @@ apt install -y ansible
 apt install -y curl git python3-pip unzip
 ansible --version > /tmp/ansible_version.txt
 
-# ==============================
-# Install AWS CLI v2 (OFFICIAL)
-# ==============================
+# Install AWS CLI v2 (official)
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
 unzip -q /tmp/awscliv2.zip -d /tmp
 /tmp/aws/install
 
-aws --version
 
-# ==============================
-# SSH key for Ansible (kept)
-# ==============================
+# Generate SSH key for Ansible (as ubuntu)
+#su - ubuntu -c "ssh-keygen -t ed25519 -f ~/.ssh/ansible -N ''"
+
+# Fix permissions
+#chown -R ubuntu:ubuntu /home/ubuntu/.ssh
+#chmod 700 /home/ubuntu/.ssh
+#chmod 600 /home/ubuntu/.ssh/ansible
+#chmod 644 /home/ubuntu/.ssh/ansible.pub
+
 cat <<EOF > /home/ubuntu/.ssh/ansible
 ${ANSIBLE_PRIVATE_KEY}
 EOF
 
-chown ubuntu:ubuntu /home/ubuntu/.ssh/ansible
-chmod 600 /home/ubuntu/.ssh/ansible
+aws --version
 
-# ==============================
-# Clone DevOps Repo
-# ==============================
 TOKEN=$(aws ssm get-parameter \
   --name "/devops/github/token" \
   --with-decryption \
@@ -63,10 +53,11 @@ cd devops-bootcamp-project/ansible
 
 echo "CONTROLLER USER DATA COMPLETED" > /tmp/user_data_controller.done
 
-# ==============================
-# Install Docker (UNCHANGED)
-# ==============================
-apt-get install -y ca-certificates curl gnupg
+# Install Docker
+apt-get install -y \
+  ca-certificates \
+  curl \
+  gnupg
 
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
@@ -82,22 +73,28 @@ echo \
 apt-get update -y
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
+# Enable Docker
 systemctl enable docker
 systemctl start docker
+
+# Allow ubuntu user to run docker
 usermod -aG docker ubuntu
 
-# ==============================
-# Dependencies for Runner
-# ==============================
+export DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies
 apt-get update -y
-apt-get install -y curl unzip jq ca-certificates
+apt-get install -y \
+  curl \
+  unzip \
+  jq \
+  awscli \
+  ca-certificates
 
-# ❌ DO NOT INSTALL awscli via apt (Ubuntu 24.04 issue)
-# apt-get install -y awscli
+# Ensure ubuntu user
+id ubuntu &>/dev/null || useradd -m -s /bin/bash ubuntu
 
-# ==============================
-# Download GitHub Runner
-# ==============================
+# Download GitHub runner
 mkdir -p $RUNNER_HOME
 cd $RUNNER_HOME
 
@@ -109,25 +106,18 @@ fi
 
 chown -R ubuntu:ubuntu $RUNNER_HOME
 
-# ==============================
-# Fetch GitHub PAT
-# ==============================
+# Fetch GitHub PAT from SSM
 GITHUB_PAT=$(aws ssm get-parameter \
   --name "/devops/github/pat" \
   --with-decryption \
   --query Parameter.Value \
   --output text)
 
-# Validate PAT (FAIL FAST)
-curl -s -H "Authorization: token $GITHUB_PAT" https://api.github.com/user | jq -e .login
-
-# ==============================
-# Remove existing runner safely
-# ==============================
+# Remove existing runner (if exists)
 RUNNER_ID=$(curl -s \
   -H "Authorization: token $GITHUB_PAT" \
   https://api.github.com/repos/nilampaksi/devops-bootcamp-project/actions/runners \
-  | jq -r '.runners[]? | select(.name=="'"$RUNNER_NAME"'") | .id' || true)
+  | jq '.runners[] | select(.name=="'"$RUNNER_NAME"'") | .id')
 
 if [ -n "$RUNNER_ID" ]; then
   curl -X DELETE \
@@ -135,56 +125,37 @@ if [ -n "$RUNNER_ID" ]; then
     https://api.github.com/repos/nilampaksi/devops-bootcamp-project/actions/runners/$RUNNER_ID
 fi
 
-# ==============================
 # Generate fresh runner token
-# ==============================
 RUNNER_TOKEN=$(curl -s -X POST \
   -H "Authorization: token $GITHUB_PAT" \
   -H "Accept: application/vnd.github+json" \
   https://api.github.com/repos/nilampaksi/devops-bootcamp-project/actions/runners/registration-token \
-  | jq -r '.token // empty')
+  | jq -r .token)
 
-if [ -z "$RUNNER_TOKEN" ]; then
-  echo "FAILED to get runner token" > /tmp/github_runner.error
-  exit 1
-fi
-
-# ==============================
-# Configure runner (PERMANENT)
-# ==============================
+# Configure runner
 sudo -u ubuntu ./config.sh \
   --url "$REPO_URL" \
   --token "$RUNNER_TOKEN" \
   --name "$RUNNER_NAME" \
   --labels "controller,docker,ecr" \
   --unattended \
+  --ephemeral
 
-# ❌ Ephemeral runners CANNOT use svc.sh
-# ./svc.sh install
-# ./svc.sh start
-
-# ✅ Start runner correctly
-sudo -u ubuntu ./run.sh &
+# Install & start service
+./svc.sh install
+./svc.sh start
 
 echo "GitHub runner installed successfully" > /tmp/github_runner.done
 
-# ==============================
-# Web App Repo & .env customization
-# ==============================
+# Docker web server customization
 cd /opt/
 rm -rf lab-final-project
-#git clone https://${TOKEN}@github.com/Infratify/lab-final-project.git
-git clone https://github.com/Infratify/lab-final-project.git
+git clone https://$TOKEN@github.com/Infratify/lab-final-project.git
 cd lab-final-project
-cp .env.example .env
 
-#ENV_FILE="/opt/lab-final-project/.env"
-#sed -i "s/^USER_NAME=.*/USER_NAME=YourName/" $ENV_FILE
-#
+# Customize .env
 ENV_FILE="/opt/lab-final-project/.env"
 
-if [ -f "$ENV_FILE" ]; then
-  sed -i "s/^USER_NAME=.*/USER_NAME=Muhammad Muhaimin Aiman/" "$ENV_FILE"
-else
-  echo "USER_NAME=YourName" > "$ENV_FILE"
-fi
+# Example: replace USER_NAME
+sed -i "s/^USER_NAME=.*/USER_NAME=YourName/" $ENV_FILE
+

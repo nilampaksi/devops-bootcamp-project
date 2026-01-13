@@ -14,8 +14,22 @@ jobs:
       APP_NAME: my-devops-project
 
     steps:
-    - name: Checkout code
+    - name: Checkout DevOps repo (Ansible, pipeline)
       uses: actions/checkout@v4
+      with:
+        path: devops
+
+    - name: Checkout App repo (Docker source)
+      uses: actions/checkout@v4
+      with:
+        repository: Infratify/lab-final-project
+        path: app
+
+    - name: Debug workspace (safe)
+      run: |
+        pwd
+        ls -la
+        ls -la app
 
     - name: Login to Amazon ECR
       run: |
@@ -27,7 +41,7 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t $APP_NAME .
+        docker build -t $APP_NAME ./app
 
     - name: Tag & Push image
       run: |
@@ -35,19 +49,16 @@ jobs:
         docker tag $APP_NAME:latest $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
         docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
 
- #   - name: Update .env file
- #     run: |
- #       sed -i 's/^USER_NAME=.*/USER_NAME=Muhd Muhaimin/' .env
-
     - name: Install Ansible Galaxy collections
       run: |
-        ansible-galaxy collection install -r ansible/collections/requirements.yml
-        
+        ansible-galaxy collection install -r devops/ansible/collections/requirements.yml
+
     - name: Run Ansible (Docker + Monitoring)
       run: |
-        cd ansible
+        cd devops/ansible
         ansible-playbook -i inventory/hosts.ini playbooks/install-docker.yml
         ansible-playbook -i inventory/hosts.ini playbooks/deploy-app.yml
         ansible-playbook -i inventory/hosts.ini playbooks/node-exporter.yml
         ansible-playbook -i inventory/hosts.ini playbooks/prometheus.yml
         ansible-playbook -i inventory/hosts.ini playbooks/grafana.yml
+
