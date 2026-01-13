@@ -43,3 +43,9 @@
       name: ubuntu
       groups: docker
       append: yes
+
+  - name: Install AWS CLI
+    apt:
+      name: awscli
+      state: present
+      update_cache: yes
