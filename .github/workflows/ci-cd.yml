@@ -14,6 +14,10 @@ jobs:
       APP_NAME: my-devops-project
 
     steps:
+    - name: Clean workspace
+      run: |
+        sudo rm -rf /opt/github-runner/_work/*
+
     - name: Checkout DevOps repo (Ansible, pipeline)
       uses: actions/checkout@v4
       with:

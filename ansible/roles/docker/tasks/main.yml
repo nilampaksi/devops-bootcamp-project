@@ -66,3 +66,10 @@
   - name: Install AWS CLI v2
     command: /tmp/aws/install --update
     when: awscli_check.rc != 0
+
+  - name: Ensure aws is available system-wide
+    file:
+      src: /usr/local/bin/aws
+      dest: /usr/bin/aws
+      state: link
+    when: awscli_check.rc != 0
