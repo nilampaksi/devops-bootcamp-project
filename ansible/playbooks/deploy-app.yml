@@ -10,27 +10,44 @@
     user_name: "Muhammad Muhaimin Aiman Bin Mazlan"
 
   tasks:
+    - name: Ensure AWS CLI is installed
+      apt:
+        name: awscli
+        state: present
+        update_cache: yes
+
+    - name: Get AWS account ID
+      command: aws sts get-caller-identity --query Account --output text
+      register: aws_account_id
+      changed_when: false
+
     - name: Login to ECR
       shell: |
         aws ecr get-login-password --region {{ aws_region }} \
         | docker login \
           --username AWS \
           --password-stdin \
-          $(aws sts get-caller-identity --query Account --output text).dkr.ecr.{{ aws_region }}.amazonaws.com
+          {{ aws_account_id.stdout }}.dkr.ecr.{{ aws_region }}.amazonaws.com
+
+    - name: Ensure app directory exists
+      file:
+        path: /opt/lab-final-project
+        state: directory
+        mode: "0755"
 
     - name: Create env file
       copy:
-        dest: /opt/app/.env
+        dest: /opt/lab-final-project/.env
         content: |
           USER_NAME={{ user_name }}
 
     - name: Run container
       docker_container:
         name: app
-        image: "{{ lookup('pipe', 'aws sts get-caller-identity --query Account --output text') }}.dkr.ecr.{{ aws_region }}.amazonaws.com/{{ ecr_repo }}:latest"
+        image: "{{ aws_account_id.stdout }}.dkr.ecr.{{ aws_region }}.amazonaws.com/{{ ecr_repo }}:latest"
         state: started
         restart_policy: always
-        env_file: /opt/app/.env
+        env_file: /opt/lab-final-project/.env
         ports:
           - "80:80"
 
