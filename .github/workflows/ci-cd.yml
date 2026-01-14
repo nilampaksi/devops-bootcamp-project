@@ -53,17 +53,27 @@ jobs:
         docker tag $APP_NAME:latest $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
         docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
 
-    - name: Install supported Ansible version
+    - name: Setup Ansible virtualenv (supported version)
       run: |
-        pip uninstall -y ansible ansible-core
+        sudo apt-get update
+        sudo apt-get install -y python3-venv python3-full
+
+        python3 -m venv /opt/ansible-venv
+        source /opt/ansible-venv/bin/activate
+
+        pip install --upgrade pip
         pip install ansible-core==2.16.9 ansible==9.6.0
+
+        ansible --version
 
     - name: Install Ansible Galaxy collections
       run: |
+        source /opt/ansible-venv/bin/activate
         ansible-galaxy collection install -r devops/ansible/collections/requirements.yml
 
     - name: Run Ansible (Docker + Monitoring)
       run: |
+        source /opt/ansible-venv/bin/activate
         cd devops/ansible
         ansible-playbook -i inventory/hosts.ini playbooks/install-docker.yml
         ansible-playbook -i inventory/hosts.ini playbooks/deploy-app.yml
