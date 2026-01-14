@@ -53,6 +53,11 @@ jobs:
         docker tag $APP_NAME:latest $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
         docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
 
+    - name: Install supported Ansible version
+      run: |
+        pip uninstall -y ansible ansible-core
+        pip install ansible-core==2.16.9 ansible==9.6.0
+
     - name: Install Ansible Galaxy collections
       run: |
         ansible-galaxy collection install -r devops/ansible/collections/requirements.yml
