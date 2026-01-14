@@ -10,15 +10,19 @@
     user_name: "Muhammad Muhaimin Aiman Bin Mazlan"
 
   tasks:
-    - name: Ensure AWS CLI is installed
-      apt:
-        name: awscli
-        state: present
-        update_cache: yes
+#    - name: Ensure AWS CLI is installed
+#      apt:
+#        name: awscli
+#        state: present
+#        update_cache: yes
 
-    - name: Get AWS account ID
-      command: aws sts get-caller-identity --query Account --output text
-      register: aws_account_id
+#    - name: Get AWS account ID
+#      command: aws sts get-caller-identity --query Account --output text
+#      register: aws_account_id
+#      changed_when: false
+
+    - name: Verify AWS CLI exists
+      command: aws --version
       changed_when: false
 
     - name: Login to ECR
