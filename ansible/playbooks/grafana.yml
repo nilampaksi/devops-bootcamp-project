@@ -2,8 +2,10 @@
 - name: Install Grafana
   hosts: monitoring
   become: true
-  roles:
+  collections:
     - grafana.grafana
+  roles:
+    - grafana
   vars:
     grafana_ini:
       security:
