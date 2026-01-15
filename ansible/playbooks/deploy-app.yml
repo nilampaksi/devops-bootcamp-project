@@ -60,7 +60,7 @@
 #        ports:
 #          - "80:80"
 
-    - name: Remove existing app container if exists
+    - name: Remove existing app container
       community.docker.docker_container:
         name: app
         state: absent
@@ -74,6 +74,5 @@
         env_file: /opt/lab-final-project/.env
         ports:
           - "80:80"
-        recreate: yes
-        pull: yes
-
+        pull: true
+        recreate: true
