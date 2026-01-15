@@ -173,14 +173,10 @@ echo "GitHub runner installed successfully" > /tmp/github_runner.done
 # ==============================
 cd /opt/
 rm -rf lab-final-project
-#git clone https://${TOKEN}@github.com/Infratify/lab-final-project.git
 git clone https://github.com/Infratify/lab-final-project.git
 cd lab-final-project
 cp .env.example .env
 
-#ENV_FILE="/opt/lab-final-project/.env"
-#sed -i "s/^USER_NAME=.*/USER_NAME=YourName/" $ENV_FILE
-#
 ENV_FILE="/opt/lab-final-project/.env"
 
 if [ -f "$ENV_FILE" ]; then
