@@ -3,7 +3,7 @@
   hosts: monitoring
   become: true
   roles:
-    - grafana.grafana.grafana
+    - grafana.grafana
   vars:
     grafana_ini:
       security:

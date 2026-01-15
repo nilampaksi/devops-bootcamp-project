@@ -1,4 +1,5 @@
 collections:
   - name: community.docker
+  - name: grafana.grafana
   - name: prometheus.prometheus
     version: "0.20.0"
