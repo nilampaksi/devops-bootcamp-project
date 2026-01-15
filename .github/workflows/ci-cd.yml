@@ -70,6 +70,7 @@ jobs:
       run: |
         source $HOME/ansible-venv/bin/activate
         ansible-galaxy collection install -r devops/ansible/collections/requirements.yml
+        ansible-galaxy collection install community.docker
 
     - name: Run Ansible (Docker + Monitoring)
       run: |

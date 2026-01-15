@@ -60,8 +60,13 @@
 #        ports:
 #          - "80:80"
 
+    - name: Remove existing app container if exists
+      community.docker.docker_container:
+        name: app
+        state: absent
+
     - name: Run container
-      docker_container:
+      community.docker.docker_container:
       name: app
       image: "{{ aws_account_id.stdout }}.dkr.ecr.{{ aws_region }}.amazonaws.com/{{ ecr_repo }}:latest"
       state: started
