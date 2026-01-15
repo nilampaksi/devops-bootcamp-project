@@ -1,0 +1,38 @@
+---
+- name: Run Prometheus in Docker
+  hosts: monitoring
+  become: true
+
+  vars:
+    aws_region: ap-southeast-1
+    account_id: "{{ lookup('env','ACCOUNT_ID') }}"
+
+  tasks:
+    - name: Create Prometheus config dir
+      file:
+        path: /opt/prometheus
+        state: directory
+
+    - name: Copy prometheus.yml
+      copy:
+        src: ../files/prometheus.yml
+        dest: /opt/prometheus/prometheus.yml
+
+    - name: Login to ECR
+      shell: |
+        aws ecr get-login-password --region {{ aws_region }} \
+        | docker login \
+          --username AWS \
+          --password-stdin \
+          {{ account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com
+
+    - name: Run Prometheus container
+      community.docker.docker_container:
+        name: prometheus
+        image: "{{ account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com/monitoring/prometheus:latest"
+        state: started
+        restart_policy: always
+        ports:
+          - "9090:9090"
+        volumes:
+          - /opt/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml

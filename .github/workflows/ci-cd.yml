@@ -76,9 +76,13 @@ jobs:
       run: |
         source $HOME/ansible-venv/bin/activate
         cd devops/ansible
+        ansible-playbook playbooks/cleanup-monitoring-systemd.yml
         ansible-playbook -i inventory/hosts.ini playbooks/install-docker.yml
         ansible-playbook -i inventory/hosts.ini playbooks/deploy-app.yml
-        ansible-playbook -i inventory/hosts.ini playbooks/node-exporter.yml
-        ansible-playbook -i inventory/hosts.ini playbooks/prometheus.yml
-        ansible-playbook -i inventory/hosts.ini playbooks/grafana.yml
+        #ansible-playbook -i inventory/hosts.ini playbooks/node-exporter.yml
+        #ansible-playbook -i inventory/hosts.ini playbooks/prometheus.yml
+        #ansible-playbook -i inventory/hosts.ini playbooks/grafana.yml
+        ansible-playbook -i inventory/hosts.ini playbooks/node-exporter-docker.yml
+        ansible-playbook -i inventory/hosts.ini playbooks/prometheus-docker.yml
+        ansible-playbook -i inventory/hosts.ini playbooks/grafana-docker.yml
 

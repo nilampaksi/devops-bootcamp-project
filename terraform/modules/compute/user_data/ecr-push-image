@@ -1,0 +1,36 @@
+#Push official images to ECR (one-time)
+AWS_REGION=ap-southeast-1
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
+# Create repos
+aws ecr create-repository --repository-name monitoring/node-exporter
+aws ecr create-repository --repository-name monitoring/prometheus
+aws ecr create-repository --repository-name monitoring/grafana
+
+#Login to ECR
+aws ecr get-login-password --region $AWS_REGION \
+ | docker login \
+   --username AWS \
+   --password-stdin \
+   $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+# Pull -> Tag -> Push
+# Node Exporter
+docker pull prom/node-exporter:latest
+docker tag prom/node-exporter:latest \
+  $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/monitoring/node-exporter:latest
+docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/monitoring/node-exporter:latest
+
+# Prometheus
+docker pull prom/prometheus:latest
+docker tag prom/prometheus:latest \
+  $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/monitoring/prometheus:latest
+docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/monitoring/prometheus:latest
+
+# Grafana
+docker pull grafana/grafana:latest
+docker tag grafana/grafana:latest \
+  $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/monitoring/grafana:latest
+docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/monitoring/grafana:latest
+
+

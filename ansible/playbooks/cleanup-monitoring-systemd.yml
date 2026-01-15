@@ -1,0 +1,49 @@
+- name: Remove systemd-based monitoring services
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Stop and disable services
+      systemd:
+        name: "{{ item }}"
+        state: stopped
+        enabled: false
+      loop:
+        - node_exporter
+        - prometheus
+        - grafana-server
+      ignore_errors: true
+
+    - name: Remove systemd unit files
+      file:
+        path: "/etc/systemd/system/{{ item }}"
+        state: absent
+      loop:
+        - node_exporter.service
+        - prometheus.service
+        - grafana-server.service
+
+    - name: Remove binaries
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /usr/local/bin/node_exporter
+        - /usr/local/bin/prometheus
+        - /usr/local/bin/promtool
+        - /usr/share/grafana
+
+    - name: Remove configs and data
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/prometheus
+        - /etc/grafana
+        - /etc/node_exporter
+        - /var/lib/prometheus
+        - /var/lib/grafana
+        - /var/lib/node_exporter
+
+    - name: Reload systemd
+      command: systemctl daemon-reload
