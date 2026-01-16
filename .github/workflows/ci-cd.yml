@@ -53,6 +53,29 @@ jobs:
         docker tag $APP_NAME:latest $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
         docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
 
+    - name: Mirror monitoring images to ECR
+      run: |
+        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        ECR_BASE=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+        echo "== Node Exporter =="
+        docker pull prom/node-exporter:v1.8.1
+        docker tag prom/node-exporter:v1.8.1 \
+          $ECR_BASE/monitoring/node-exporter:latest
+        docker push $ECR_BASE/monitoring/node-exporter:latest
+
+        echo "== Prometheus =="
+        docker pull prom/prometheus:v2.52.0
+        docker tag prom/prometheus:v2.52.0 \
+          $ECR_BASE/monitoring/prometheus:latest
+        docker push $ECR_BASE/monitoring/prometheus:latest
+
+        echo "== Grafana =="
+        docker pull grafana/grafana:10.4.2
+        docker tag grafana/grafana:10.4.2 \
+          $ECR_BASE/monitoring/grafana:latest
+        docker push $ECR_BASE/monitoring/grafana:latest
+
     - name: Setup Ansible virtualenv (supported version)
       run: |
         sudo apt-get update
