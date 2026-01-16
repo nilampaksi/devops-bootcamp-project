@@ -12,6 +12,10 @@
       command: aws sts get-caller-identity --query Account --output text
       register: aws_account_id
       changed_when: false
+  
+    - name: Debug AWS account ID
+      debug:
+        var: aws_account_id.stdout
 
     - name: Login to ECR
       shell: |
