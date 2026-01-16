@@ -5,17 +5,18 @@
 
   vars:
     aws_region: ap-southeast-1
-    account_id: "{{ lookup('env','ACCOUNT_ID') }}"
+    ecr_repo: monitoring/node-exporter
 
   tasks:
     - name: Get AWS account ID
       command: aws sts get-caller-identity --query Account --output text
       register: aws_account_id
       changed_when: false
-  
-    - name: Debug AWS account ID
-      debug:
-        var: aws_account_id.stdout
+
+    - name: Fail if AWS account ID missing
+      fail:
+        msg: "AWS account ID is empty — check EC2 IAM role"
+      when: aws_account_id.stdout | length == 0
 
     - name: Login to ECR
       shell: |
@@ -25,19 +26,17 @@
           --password-stdin \
           {{ aws_account_id.stdout }}.dkr.ecr.{{ aws_region }}.amazonaws.com
 
+    - name: Remove existing node-exporter container
+      community.docker.docker_container:
+        name: node-exporter
+        state: absent
+
     - name: Run node-exporter container
       community.docker.docker_container:
         name: node-exporter
-        image: "{{ account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com/monitoring/node-exporter:latest"
+        image: "{{ aws_account_id.stdout }}.dkr.ecr.{{ aws_region }}.amazonaws.com/{{ ecr_repo }}:latest"
         state: started
         restart_policy: always
         network_mode: host
-        read_only: true
-        pid_mode: host
-        command:
-          - '--path.procfs=/host/proc'
-          - '--path.sysfs=/host/sys'
-        volumes:
-          - /proc:/host/proc:ro
-          - /sys:/host/sys:ro
-          - /:/rootfs:ro
+        pull: true
+        recreate: true
