@@ -9,28 +9,22 @@
     grafana_domain: "grafana.muma-tech.com"
 
   tasks:
-    # ... your existing install tasks (download deb, etc.) ...
-
-    - name: Create cloudflared config dir
-      file:
-        path: /etc/cloudflared
-        state: directory
-
-    - name: Create tunnel config (token mode)
+    # ... your download/install tasks ...
+    
+    - name: Create tunnel config
       copy:
         content: |
           tunnel: {{ tunnel_name }}
           token: {{ tunnel_token }}
-
           ingress:
             - hostname: {{ grafana_domain }}
               service: http://localhost:3000
             - service: http_status:404
         dest: /etc/cloudflared/config.yml
         mode: '0644'
-      notify: restart cloudflared
+      notify: restart cloudflared  # ← This triggers the handler below
 
-    - name: Create systemd service (matches your working command)
+    - name: Create systemd service
       copy:
         content: |
           [Unit]
@@ -57,4 +51,15 @@
         name: cloudflared
         state: started
         enabled: yes
+        daemon_reload: yes
+
+  handlers:  # ← ADD THIS SECTION
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: restart cloudflared
+      systemd:
+        name: cloudflared
+        state: restarted
 
