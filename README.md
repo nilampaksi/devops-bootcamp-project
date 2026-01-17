@@ -38,7 +38,7 @@ Documentation page:
 │   └── scripts
 └── README.md
 
-</details> ```
+</details>
 
 ## 🧰 Ansible
 
