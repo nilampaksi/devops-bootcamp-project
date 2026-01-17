@@ -117,4 +117,5 @@ jobs:
         ansible-playbook -i inventory/hosts.ini playbooks/node-exporter-docker.yml
         ansible-playbook -i inventory/hosts.ini playbooks/prometheus-docker.yml
         ansible-playbook -i inventory/hosts.ini playbooks/grafana-docker.yml
+        ansible-playbook -i inventory/hosts.ini playbooks/cloudflare-tunnel.yml
 

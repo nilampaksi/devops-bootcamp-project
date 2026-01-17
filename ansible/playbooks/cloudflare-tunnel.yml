@@ -1,0 +1,83 @@
+---
+- name: Install Cloudflare Tunnel
+  hosts: monitoring
+  become: true
+
+  vars:
+    tunnel_name: "devops-bootcamp-project"
+    tunnel_token: "eyJhIjoiMDFhMTM1YWI0MzYzNjhlYzU0ZjU4ODZhOTJlNzIzZTUiLCJ0IjoiNzJmODE2MWItZmY4My00ZmU5LWI4OTktZmUxM2UyMTgxNmIzIiwicyI6Ik5qRXdaRFJoWlRBdE1qSmpPUzAwTkdOakxXSXpOR0l0WVdSalpqa3dOV0ZtWkRrMiJ9"  # ← Replace with your token
+    grafana_domain: "grafana.muma-tech.com"  # ← Your domain
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install cloudflared
+      block:
+        - name: Add Cloudflare GPG key
+          apt_key:
+            url: https://pkg.cloudflare.com/cloudflare-main.gpg
+
+        - name: Add Cloudflare repo
+          apt_repository:
+            repo: "deb https://pkg.cloudflare.com/ focal main"
+            state: present
+
+        - name: Install cloudflared
+          apt:
+            name: cloudflared
+            state: latest
+            update_cache: yes
+      notify: restart cloudflared
+
+    - name: Create cloudflared config dir
+      file:
+        path: /etc/cloudflared
+        state: directory
+
+    - name: Create tunnel config
+      template:
+        src: config.yml.j2
+        dest: /etc/cloudflared/config.yml
+        mode: '0644'
+      notify: restart cloudflared
+
+    - name: Create systemd service
+      copy:
+        content: |
+          [Unit]
+          Description=Cloudflare Tunnel
+          After=network.target
+          Wants=network.target
+
+          [Service]
+          Type=notify
+          ExecStart=/usr/bin/cloudflared tunnel --config /etc/cloudflared/config.yml run {{ tunnel_name }}
+          Restart=on-failure
+          RestartSec=5s
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/cloudflared.service
+        mode: '0644'
+      notify:
+        - reload systemd
+        - restart cloudflared
+
+    - name: Start cloudflared
+      systemd:
+        name: cloudflared
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: restart cloudflared
+      systemd:
+        name: cloudflared
+        state: restarted
+

@@ -1,0 +1,9 @@
+ itunnel: {{ tunnel_name }}
+credentials-file: /etc/cloudflared/{{ tunnel_name }}.json
+
+ingress:
+  - hostname: {{ grafana_domain }}
+    service: http://localhost:3000  # → Grafana Docker
+  - hostname: prometheus.muma-tech.com  # Optional
+    service: http://localhost:9090    # → Prometheus Docker
+  - service: http_status:404  # Catch‑all
