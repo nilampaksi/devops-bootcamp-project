@@ -1,12 +1,12 @@
-# Author Name: Muhammad Muhaimin Aiman Bin Mazlan
-# Author Emails: nilampaksi95@gmail.com
-# Project's Target: Increase opportunity to jump into Devops scene or scope
-
 # DevOps Bootcamp Project – Final Project for Devops Bootcamp 2025/2026
 
 This repository contains Infrastructure as Code (Terraform), configuration management (Ansible) and CI/CD automation (GitHub Actions) to deploy a containerized web application with monitoring (Prometheus, Grafana) on AWS.
 
-## 📂 Repository Structure
+Author Name: Muhammad Muhaimin Aiman Bin Mazlan
+Author Emails: nilampaksi95@gmail.com
+Project's Target: Increase opportunity to jump into Devops scene or scope
+
+## 📂 Repository Structure (Need to click)
 
 <details>
 <summary><strong>Click to expand directory tree</strong></summary>
@@ -25,7 +25,6 @@ This repository contains Infrastructure as Code (Terraform), configuration manag
 │   │   └── network
 │   └── scripts
 └── README.md
-</details> ```
 
 ## 🧰 Ansible
 
@@ -64,7 +63,7 @@ Provision AWS infrastructure.
 
 ## 🖼 Architecture Overview
 
-![Architecture Diagram](~/home/ubuntu/Project-Architecture-Diagram.png)
+![Architecture Diagram](/home/ubuntu/Project-Architecture-Diagram.png)
 
 ## 🔁 CI/CD Pipeline
 
@@ -74,15 +73,10 @@ Provision AWS infrastructure.
 4. Deploy containers on EC2
 5. Monitoring via Prometheus & Grafana
 
-<details>
 <summary>🔍 Monitoring Stack Details</summary>
 
 - Node Exporter → Web Server (port 9100)
 - Prometheus → Monitoring Server (9090)
 - Grafana → Monitoring Server (3000)
 - Images stored in Amazon ECR
-
-</details>
-
-
 
