@@ -18,7 +18,7 @@ Documentation page:
     - [Github Pages](https://github.com/nilampaksi/devops-bootcamp-project): https://github.com/nilampaksi/devops-bootcamp-project
 
 
-## 📂 Repository Structure (Need to click)
+## 📂 Repository Structure (Expand by clicking link below)
 
 <details>
 <summary><strong>Click to expand directory tree</strong></summary>
@@ -38,7 +38,7 @@ Documentation page:
 │   └── scripts
 └── README.md
 
-</details>
+</details> ```
 
 ## 🧰 Ansible
 
