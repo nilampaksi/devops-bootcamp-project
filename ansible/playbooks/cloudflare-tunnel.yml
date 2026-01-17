@@ -13,23 +13,18 @@
       apt:
         update_cache: yes
 
-    - name: Install cloudflared
+    - name: Download and install cloudflared (direct deb)
       block:
-        - name: Add Cloudflare GPG key
-          apt_key:
-            url: https://pkg.cloudflare.com/cloudflare-main.gpg
-
-        - name: Add Cloudflare repo
-          apt_repository:
-            repo: "deb https://pkg.cloudflare.com/ focal main"
-            state: present
+        - name: Download latest cloudflared deb
+          get_url:
+            url: https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+            dest: /tmp/cloudflared.deb
+            mode: '0644'
 
         - name: Install cloudflared
           apt:
-            name: cloudflared
-            state: latest
-            update_cache: yes
-      notify: restart cloudflared
+            deb: /tmp/cloudflared.deb
+          notify: restart cloudflared
 
     - name: Create cloudflared config dir
       file:
