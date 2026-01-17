@@ -18,13 +18,19 @@
         msg: "AWS account ID is empty — check EC2 IAM role"
       when: aws_account_id.stdout | length == 0
 
+    - name: Set ECR facts
+      set_fact:
+        account_id: "{{ aws_account_id.stdout }}"
+        ecr_registry: "{{ aws_account_id.stdout }}.dkr.ecr.{{ aws_region }}.amazonaws.com"
+        prometheus_image: "{{ aws_account_id.stdout }}.dkr.ecr.{{ aws_region }}.amazonaws.com/monitoring/prometheus:latest"
+
     - name: Login to ECR
       shell: |
         aws ecr get-login-password --region {{ aws_region }} \
         | docker login \
           --username AWS \
           --password-stdin \
-          {{ aws_account_id.stdout }}.dkr.ecr.{{ aws_region }}.amazonaws.com
+          {{ ecr_registry }}
 
     - name: Create Prometheus config dir
       file:
