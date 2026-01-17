@@ -18,6 +18,7 @@
         msg: "AWS account ID is empty — check EC2 IAM role"
       when: aws_account_id.stdout | length == 0
 
+        #New Update below  
     - name: Login to ECR
       shell: |
         aws ecr get-login-password --region {{ aws_region }} \
