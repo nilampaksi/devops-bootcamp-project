@@ -1,9 +1,9 @@
 locals {
-	prefix = "${var.project}-final-project"
+  prefix = "${var.project}-final-project"
 
-	common_tags = {
-		Project = var.project
-		ManagedBy = "Terraform"
-	}
+  common_tags = {
+    Project   = var.project
+    ManagedBy = "Terraform"
+  }
 }
 

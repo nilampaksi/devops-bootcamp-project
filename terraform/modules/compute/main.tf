@@ -8,6 +8,11 @@ resource "aws_instance" "vm" {
 
   ami           = var.ami
   instance_type = var.instance_type
+  root_block_device {
+    volume_size = var.root_volume_size
+    volume_type = "gp3"
+    delete_on_termination = true
+  }
   subnet_id     = each.value.subnet_type == "public" ? var.public_subnet_id : var.private_subnet_id
   vpc_security_group_ids = each.value.subnet_type == "public" ? [aws_security_group.web.id] : [aws_security_group.private.id]
   user_data = each.value.role == "controller" ? templatefile("${path.module}/user_data/controller.sh", { TOKEN = "", ANSIBLE_PRIVATE_KEY = tls_private_key.ansible.private_key_openssh }) : templatefile("${path.module}/user_data/common.sh", { ANSIBLE_PUBLIC_KEY = tls_private_key.ansible.public_key_openssh, SSH_DIR = "/home/ubuntu/.ssh", USER = "ubuntu" })

@@ -8,6 +8,24 @@
     account_id: "{{ lookup('env','ACCOUNT_ID') }}"
 
   tasks:
+    - name: Get AWS account ID
+      command: aws sts get-caller-identity --query Account --output text
+      register: aws_account_id
+      changed_when: false
+
+    - name: Fail if AWS account ID missing
+      fail:
+        msg: "AWS account ID is empty — check EC2 IAM role"
+      when: aws_account_id.stdout | length == 0
+
+    - name: Login to ECR
+      shell: |
+        aws ecr get-login-password --region {{ aws_region }} \
+        | docker login \
+          --username AWS \
+          --password-stdin \
+          {{ aws_account_id.stdout }}.dkr.ecr.{{ aws_region }}.amazonaws.com
+
     - name: Create Grafana data dir
       file:
         path: /opt/grafana

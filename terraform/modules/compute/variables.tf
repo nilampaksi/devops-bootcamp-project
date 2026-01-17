@@ -39,3 +39,8 @@ variable "ami" {
 variable "instance_type" {
   type = string
 }
+
+variable "root_volume_size" {
+  description = "Root EBS volume size in GB"
+  type = number
+}
