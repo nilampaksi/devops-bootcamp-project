@@ -4,54 +4,53 @@
   become: true
 
   vars:
-    tunnel_name: "devops-bootcamp-project"
-    tunnel_token: "eyJhIjoiMDFhMTM1YWI0MzYzNjhlYzU0ZjU4ODZhOTJlNzIzZTUiLCJ0IjoiNzJmODE2MWItZmY4My00ZmU5LWI4OTktZmUxM2UyMTgxNmIzIiwicyI6IllUTTROMlU1WmprdE1HVmxNUzAwTUdSbExXSTBaamd0Tm1SaE5ETTNZelpsT1RVNCJ9"  # ← Replace with your token
-    grafana_domain: "grafana.muma-tech.com"  # ← Your domain
+    tunnel_name: "devops-bootcamp-project"  # From your logs
+    grafana_domain: "grafana.muma-tech.com"
 
   tasks:
-    - name: Update apt cache
-      apt:
-        update_cache: yes
+    # ... your existing install/download tasks ...
 
-    - name: Download and install cloudflared (direct deb)
-      block:
-        - name: Download latest cloudflared deb
-          get_url:
-            url: https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-            dest: /tmp/cloudflared.deb
-            mode: '0644'
+    - name: Authenticate tunnel (creates cert.pem)
+      shell: |
+        cloudflared tunnel login
+      become_user: root
+      register: tunnel_login
+      ignore_errors: yes
 
-        - name: Install cloudflared
-          apt:
-            deb: /tmp/cloudflared.deb
-          notify: restart cloudflared
+    - name: Run tunnel once to create credentials
+      shell: |
+        cloudflared tunnel run --token eyJhIjoiMDFhMTM1YWI0MzYzNjhlYzU0ZjU4ODZhOTJlNzIzZTUiLCJ0IjoiNzJmODE2MWItZmY4My00ZmU5LWI4OTktZmUxM2UyMTgxNmIzIiwicyI6IllUTTROMlU1WmprdE1HVmxNUzAwTUdSbExXSTBaamd0Tm1SaE5ETTNZelpsT1RVNCJ9 --name {{ tunnel_name }}
+      become_user: root
+      timeout: 30
+      ignore_errors: yes
 
-    - name: Create cloudflared config dir
-      file:
-        path: /etc/cloudflared
-        state: directory
+    - name: Create tunnel config (no token needed)
+      copy:
+        content: |
+          tunnel: {{ tunnel_name }}
+          credentials-file: /root/.cloudflared/{{ tunnel_name }}.json
 
-    - name: Create tunnel config
-      template:
-        src: ../templates/config.yml.j2
+          ingress:
+            - hostname: {{ grafana_domain }}
+              service: http://localhost:3000
+            - service: http_status:404
         dest: /etc/cloudflared/config.yml
         mode: '0644'
       notify: restart cloudflared
 
-    - name: Create cloudflared systemd service (token mode)
+    - name: Create systemd service (config only)
       copy:
         content: |
           [Unit]
           Description=Cloudflare Tunnel
-          After=network.target docker.service
-          Wants=network.target docker.service
+          After=network-online.target
+          Wants=network-online.target
 
           [Service]
           Type=simple
-          ExecStart=/usr/bin/cloudflared tunnel --token {{ tunnel_token }} --name {{ tunnel_name }} --loglevel info
-          Restart=on-failure
-          RestartSec=5s
-          User=root
+          ExecStart=/usr/bin/cloudflared tunnel --config /etc/cloudflared/config.yml run
+          Restart=always
+          RestartSec=5
 
           [Install]
           WantedBy=multi-user.target
@@ -61,12 +60,8 @@
         - reload systemd
         - restart cloudflared
 
-  handlers:
-    - name: reload systemd
-      systemd:
-        daemon_reload: yes
-
-    - name: restart cloudflared
+    - name: Start cloudflared
       systemd:
         name: cloudflared
-        state: restarted
+        state: started
+        enabled: yes
