@@ -33,14 +33,6 @@
         owner: 472
         group: 472
 
-    - name: Login to ECR
-      shell: |
-        aws ecr get-login-password --region {{ aws_region }} \
-        | docker login \
-          --username AWS \
-          --password-stdin \
-          {{ account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com
-
     - name: Run Grafana container
       community.docker.docker_container:
         name: grafana
