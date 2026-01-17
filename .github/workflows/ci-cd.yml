@@ -53,36 +53,37 @@ jobs:
         docker tag $APP_NAME:latest $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
         docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO:latest
 
-#    - name: Mirror monitoring images to ECR (only if missing)
-#      run: |
-#        set -e
-#
-#        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-#        ECR_BASE=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-#
-#        mirror_if_missing () {
-#          REPO=$1
-#          TAG=$2
-#          SRC_IMAGE=$3
-#
-#          if aws ecr describe-images \
-#            --repository-name $REPO \
-#            --image-ids imageTag=$TAG \
-#            --region $AWS_REGION > /dev/null 2>&1; then
-#            echo "✔ $REPO:$TAG already exists, skipping"
-#          else
-#            echo "⬇ Pulling $SRC_IMAGE"
-#            docker pull $SRC_IMAGE
-#
-#            echo "⬆ Pushing to ECR"
-#            docker tag $SRC_IMAGE $ECR_BASE/$REPO:$TAG
-#            docker push $ECR_BASE/$REPO:$TAG
-#          fi
-#        }
+    - name: Mirror monitoring images to ECR (only if missing)
+      timeout-minutes: 10
+      run: |
+        set -e
 
-#        mirror_if_missing monitoring/node-exporter latest prom/node-exporter:v1.8.1
-#        mirror_if_missing monitoring/prometheus latest prom/prometheus:v2.52.0
-#        mirror_if_missing monitoring/grafana latest grafana/grafana:10.4.2
+        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+        ECR_BASE=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+        mirror_if_missing () {
+          REPO=$1
+          TAG=$2
+          SRC_IMAGE=$3
+
+          if aws ecr describe-images \
+            --repository-name $REPO \
+            --image-ids imageTag=$TAG \
+            --region $AWS_REGION > /dev/null 2>&1; then
+            echo "✔ $REPO:$TAG already exists, skipping"
+          else
+            echo "⬇ Pulling $SRC_IMAGE"
+            docker pull $SRC_IMAGE
+
+            echo "⬆ Pushing to ECR"
+            docker tag $SRC_IMAGE $ECR_BASE/$REPO:$TAG
+            docker push $ECR_BASE/$REPO:$TAG
+          fi
+        }
+
+        mirror_if_missing monitoring/node-exporter latest prom/node-exporter:v1.8.1
+        mirror_if_missing monitoring/prometheus latest prom/prometheus:v2.52.0
+        mirror_if_missing monitoring/grafana latest grafana/grafana:10.4.2
 
     - name: Setup Ansible virtualenv (supported version)
       run: |
