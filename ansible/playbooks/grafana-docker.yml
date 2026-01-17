@@ -45,6 +45,7 @@
         image: "{{ account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com/monitoring/grafana:latest"
         state: started
         restart_policy: always
+        network_mode: host
         ports:
           - "3000:3000"
         volumes:
