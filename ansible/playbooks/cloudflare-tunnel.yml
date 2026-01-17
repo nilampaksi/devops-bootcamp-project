@@ -38,19 +38,20 @@
         mode: '0644'
       notify: restart cloudflared
 
-    - name: Create systemd service
+    - name: Create cloudflared systemd service (token mode)
       copy:
         content: |
           [Unit]
           Description=Cloudflare Tunnel
-          After=network.target
-          Wants=network.target
+          After=network.target docker.service
+          Wants=network.target docker.service
 
           [Service]
-          Type=notify
-          ExecStart=/usr/bin/cloudflared tunnel --config /etc/cloudflared/config.yml run {{ tunnel_name }}
+          Type=simple
+          ExecStart=/usr/bin/cloudflared tunnel --token {{ tunnel_token }} --name {{ tunnel_name }} --loglevel info
           Restart=on-failure
           RestartSec=5s
+          User=root
 
           [Install]
           WantedBy=multi-user.target
@@ -59,12 +60,6 @@
       notify:
         - reload systemd
         - restart cloudflared
-
-    - name: Start cloudflared
-      systemd:
-        name: cloudflared
-        state: started
-        enabled: yes
 
   handlers:
     - name: reload systemd
@@ -75,4 +70,3 @@
       systemd:
         name: cloudflared
         state: restarted
-
