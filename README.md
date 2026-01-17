@@ -3,8 +3,25 @@
 This repository contains Infrastructure as Code (Terraform), configuration management (Ansible) and CI/CD automation (GitHub Actions) to deploy a containerized web application with monitoring (Prometheus, Grafana) on AWS.
 
 Author Name: Muhammad Muhaimin Aiman Bin Mazlan
+
 Author Emails: nilampaksi95@gmail.com
+
 Project's Target: Increase opportunity to jump into Devops scene or scope
+
+Documentation page:
+
+- **Web application URL**
+    - [Web Application](https://web.muma-tech.com)
+
+- **Monitoring URL**
+    - Visualization
+        - [Grafana](https://monitoring.muma-tech.com)
+    - Metrics Collection (monitoring)
+        - [Prometheus](https://prometheus.muma-tech.com)
+
+- GitHub repository URL
+    - [Github Pages](https://github.com/nilampaksi/devops-bootcamp-project)
+
 
 ## 📂 Repository Structure (Need to click)
 
@@ -25,6 +42,8 @@ Project's Target: Increase opportunity to jump into Devops scene or scope
 │   │   └── network
 │   └── scripts
 └── README.md
+
+</details> ```
 
 ## 🧰 Ansible
 
@@ -63,7 +82,7 @@ Provision AWS infrastructure.
 
 ## 🖼 Architecture Overview
 
-![Architecture Diagram](/home/ubuntu/Project-Architecture-Diagram.png)
+![Architecture Diagram](docs/images/Project-Architecture-Diagram.png)
 
 ## 🔁 CI/CD Pipeline
 
@@ -73,10 +92,14 @@ Provision AWS infrastructure.
 4. Deploy containers on EC2
 5. Monitoring via Prometheus & Grafana
 
+
+<details>
 <summary>🔍 Monitoring Stack Details</summary>
 
 - Node Exporter → Web Server (port 9100)
 - Prometheus → Monitoring Server (9090)
 - Grafana → Monitoring Server (3000)
 - Images stored in Amazon ECR
+
+</details>
 
