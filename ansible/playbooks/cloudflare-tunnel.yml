@@ -5,7 +5,7 @@
 
   vars:
     tunnel_name: "devops-bootcamp-project"
-    tunnel_token: "eyJhIjoiMDFhMTM1YWI0MzYzNjhlYzU0ZjU4ODZhOTJlNzIzZTUiLCJ0IjoiNzJmODE2MWItZmY4My00ZmU5LWI4OTktZmUxM2UyMTgxNmIzIiwicyI6Ik5qRXdaRFJoWlRBdE1qSmpPUzAwTkdOakxXSXpOR0l0WVdSalpqa3dOV0ZtWkRrMiJ9"  # ← Replace with your token
+    tunnel_token: "eyJhIjoiMDFhMTM1YWI0MzYzNjhlYzU0ZjU4ODZhOTJlNzIzZTUiLCJ0IjoiNzJmODE2MWItZmY4My00ZmU5LWI4OTktZmUxM2UyMTgxNmIzIiwicyI6IllUTTROMlU1WmprdE1HVmxNUzAwTUdSbExXSTBaamd0Tm1SaE5ETTNZelpsT1RVNCJ9"  # ← Replace with your token
     grafana_domain: "grafana.muma-tech.com"  # ← Your domain
 
   tasks:
