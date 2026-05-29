@@ -1,4 +1,4 @@
-# DevOps Bootcamp Project – Final Project for Devops Bootcamp 2025/2026
+# DevOps Mini Project
 
 This repository contains Infrastructure as Code (Terraform), configuration management (Ansible) and CI/CD automation (GitHub Actions) to deploy a containerized web application with monitoring (Prometheus, Grafana) on AWS.
 
